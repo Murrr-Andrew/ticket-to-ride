@@ -2,6 +2,7 @@
 
 import { CITIES, ROUTES, VIEWBOX } from './data.js';
 import { routeWagons, routePath } from './geometry.js';
+import { LAND_PATH } from './land.js';
 
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -40,7 +41,11 @@ export function renderMap(svg, handlers) {
   const station = el('symbol', { id: 'station', viewBox: '0 0 20 20' }, defs);
   el('path', { d: 'M2 9 10 2l8 7v9H2z', stroke: '#fff', 'stroke-width': 2, 'stroke-linejoin': 'round' }, station);
 
-  el('rect', { x: 0, y: 0, width: VIEWBOX.w, height: VIEWBOX.h, class: 'board-bg' }, svg);
+  el('rect', { x: -VIEWBOX.w, y: -VIEWBOX.h, width: VIEWBOX.w * 3, height: VIEWBOX.h * 3, class: 'table' }, svg);
+  el('clipPath', { id: 'board-clip' }, defs).appendChild(el('rect', { x: 0, y: 0, width: VIEWBOX.w, height: VIEWBOX.h }));
+  el('rect', { x: 0, y: 0, width: VIEWBOX.w, height: VIEWBOX.h, class: 'sea' }, svg);
+  el('path', { d: LAND_PATH, class: 'land', 'fill-rule': 'evenodd', 'clip-path': 'url(#board-clip)' }, svg);
+  el('rect', { x: -4, y: -4, width: VIEWBOX.w + 8, height: VIEWBOX.h + 8, rx: 10, class: 'frame' }, svg);
 
   layers.routes = el('g', { class: 'routes' }, svg);
   layers.rings = el('g', { class: 'rings' }, svg);
@@ -101,7 +106,7 @@ export function updateMap(svg, state, { last, tickets }) {
   layers.stations.innerHTML = '';
   for (const [cityId, color] of state.stations) {
     const c = cityById.get(cityId);
-    el('use', { href: '#station', x: c.x + 4, y: c.y - 30, width: 24, height: 24, fill: PLAYER_FILL[color] }, layers.stations);
+    el('use', { href: '#station', x: c.x + 4, y: c.y - 30, width: 24, height: 24, fill: PLAYER_FILL[color], 'data-city': cityId }, layers.stations);
   }
 
   layers.rings.innerHTML = '';
@@ -173,54 +178,65 @@ function enablePanZoom(svg, { onRouteTap, onCityTap }) {
     apply();
   };
 
-  const pointers = new Map();
-  let gesture = null; // { startX, startY, startTime, moved, multi, lastDist, lastMid }
+  // Each finger is tracked on its own, so a thumb resting on the screen
+  // doesn't block taps by another finger.
+  const pointers = new Map(); // id -> { x, y, sx, sy, t, moved, pinched }
+  let pinch = null; // { startDist, startMid, lastDist, lastMid, active }
+
+  const pair = () => {
+    const [p1, p2] = [...pointers.values()];
+    return { dist: Math.hypot(p1.x - p2.x, p1.y - p2.y), mid: { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 } };
+  };
 
   svg.addEventListener('pointerdown', (e) => {
     try { svg.setPointerCapture(e.pointerId); } catch { /* not an active pointer */ }
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size === 1) {
-      gesture = { startX: e.clientX, startY: e.clientY, startTime: Date.now(), moved: false, multi: false };
-    } else {
-      gesture.multi = true;
-      gesture.lastDist = null;
+    pointers.set(e.pointerId, {
+      x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, t: Date.now(), moved: false, pinched: false,
+    });
+    if (pointers.size === 2) {
+      const { dist, mid } = pair();
+      pinch = { startDist: dist, startMid: mid, lastDist: dist, lastMid: mid, active: false };
     }
   });
 
   svg.addEventListener('pointermove', (e) => {
-    const prev = pointers.get(e.pointerId);
-    if (!prev || !gesture) return;
-    const cur = { x: e.clientX, y: e.clientY };
-    pointers.set(e.pointerId, cur);
-    if (Math.hypot(cur.x - gesture.startX, cur.y - gesture.startY) > 8) gesture.moved = true;
+    const p = pointers.get(e.pointerId);
+    if (!p) return;
+    const prev = { x: p.x, y: p.y };
+    p.x = e.clientX;
+    p.y = e.clientY;
+    if (Math.hypot(p.x - p.sx, p.y - p.sy) > 8) p.moved = true;
 
-    if (pointers.size === 1 && gesture.moved && !gesture.multi) {
+    if (pointers.size === 1 && (p.moved || p.pinched)) {
       const s = scale();
-      vb.x -= (cur.x - prev.x) * s;
-      vb.y -= (cur.y - prev.y) * s;
+      vb.x -= (p.x - prev.x) * s;
+      vb.y -= (p.y - prev.y) * s;
       clamp();
       apply();
-    } else if (pointers.size === 2) {
-      const [p1, p2] = [...pointers.values()];
-      const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-      const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-      if (gesture.lastDist) {
-        const s = scale();
-        vb.x -= (mid.x - gesture.lastMid.x) * s;
-        vb.y -= (mid.y - gesture.lastMid.y) * s;
-        zoomAt(mid.x, mid.y, gesture.lastDist / dist);
+    } else if (pointers.size === 2 && pinch) {
+      const { dist, mid } = pair();
+      if (!pinch.active && (Math.abs(dist - pinch.startDist) > 12
+        || Math.hypot(mid.x - pinch.startMid.x, mid.y - pinch.startMid.y) > 12)) {
+        pinch.active = true;
+        for (const q of pointers.values()) q.pinched = true;
       }
-      gesture.lastDist = dist;
-      gesture.lastMid = mid;
+      if (pinch.active) {
+        const s = scale();
+        vb.x -= (mid.x - pinch.lastMid.x) * s;
+        vb.y -= (mid.y - pinch.lastMid.y) * s;
+        zoomAt(mid.x, mid.y, pinch.lastDist / dist);
+      }
+      pinch.lastDist = dist;
+      pinch.lastMid = mid;
     }
   });
 
   const end = (e) => {
-    if (!pointers.has(e.pointerId)) return;
+    const p = pointers.get(e.pointerId);
+    if (!p) return;
     pointers.delete(e.pointerId);
-    if (pointers.size > 0 || !gesture) return;
-    const isTap = !gesture.moved && !gesture.multi && Date.now() - gesture.startTime < 500 && e.type === 'pointerup';
-    gesture = null;
+    if (pointers.size < 2) pinch = null;
+    const isTap = e.type === 'pointerup' && !p.moved && !p.pinched && Date.now() - p.t < 800;
     if (!isTap) return;
     const target = document.elementFromPoint(e.clientX, e.clientY);
     const city = target?.closest?.('[data-city]');

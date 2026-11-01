@@ -4,14 +4,14 @@ A personal companion page for the Ticket to Ride Europe board game: the board on
 
 **Open it:** https://murrr-andrew.github.io/ticket-to-ride/
 
-Works best with the phone in landscape. Add it to the home screen and it opens offline too.
+The interface is in Russian; city names are as printed on the English board. Works best with the phone in landscape. Add it to the home screen and it opens offline too.
 
 ## How to use
 
-- **Pick a color** in the right column. Every new action uses it until you pick another one.
+- **Menu** (round button, top right) opens the side panel: player colors, score summary, score table. Every new action uses the chosen color until you pick another one.
 - **Tap a route** to claim it; tap a claimed route to unclaim it. Double routes ask which line.
 - **Tap a city** to place or remove a station, or to start a ticket: "Ticket from here", tap the second city, enter the points.
-- **Undo** reverts the last action. The last action always pulses on the map.
+- **↶** (below the menu button) reverts the last action. The last action always pulses on the map.
 - **Score & tickets** shows points, wagons, stations and the longest route for every color, and your tickets. A ticket is marked connected automatically when your routes link both cities; use "Mark connected" when the path goes through a station.
 - **Check map** (`?check`) lists every route by city to compare with a physical board.
 

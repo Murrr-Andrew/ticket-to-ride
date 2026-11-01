@@ -102,7 +102,7 @@ export function renderPanel(ctx) {
       class: `chip${c === color ? ' active' : ''}`,
       style: `background:${PLAYER_FILL[c]}`,
       'aria-label': colorName(c, true),
-      onclick: () => ctx.setColor(c),
+      onclick: () => { ctx.setColor(c); closeDrawer(); },
     }))),
     h('button', { class: 'summary', onclick: ctx.openTable },
       h('div', {}, h('b', {}, String(s.routePts)), ' очк.'),
@@ -111,13 +111,28 @@ export function renderPanel(ctx) {
       h('div', {}, `Билеты ${doneCount}/${tickets.length}`),
       tickets.length ? h('div', { class: 'muted' }, `+${s.ticketsDone} / −${s.ticketsOpen}`) : null,
       h('div', {}, `Цепочка ${s.longest}`)),
-    pendingFrom
-      ? h('div', { class: 'hint' }, `Билет из ${nameOf(pendingFrom)}: нажмите второй город`,
-        h('button', { class: 'btn', style: 'margin-top:6px', onclick: ctx.cancelTicket }, 'Отмена'))
-      : null,
     h('button', { class: 'btn primary', disabled: game.actions.length === 0, onclick: ctx.undo }, '↶ Отменить'),
+    h('button', { class: 'btn', onclick: closeDrawer }, 'Скрыть ›'),
     h('button', { class: 'btn', onclick: ctx.openTable }, 'Очки и билеты'),
   ].filter(Boolean));
+
+  // Ticket being added: hint over the map.
+  const hint = $('ticket-hint');
+  hint.hidden = !pendingFrom;
+  hint.innerHTML = '';
+  if (pendingFrom) {
+    hint.append(`Билет из ${nameOf(pendingFrom)}: нажмите второй город`,
+      h('button', { class: 'btn', onclick: ctx.cancelTicket }, 'Отмена'));
+  }
+
+  // Floating buttons on the map.
+  const menu = $('menu-btn');
+  menu.innerHTML = '';
+  menu.append(h('span', { class: 'dot', style: `background:${PLAYER_FILL[color]}` }), String(s.routePts));
+  menu.onclick = () => (panel.classList.contains('open') ? closeDrawer() : openDrawer());
+  const undo = $('undo-btn');
+  undo.disabled = game.actions.length === 0;
+  undo.onclick = ctx.undo;
 
   // Last-round warning.
   const low = PLAYER_COLORS
@@ -128,8 +143,23 @@ export function renderPanel(ctx) {
   banner.textContent = low.map(({ c, left }) => `Последний круг: у ${colorName(c, false, true)} осталось вагонов: ${left.wagonsLeft}`).join(' · ');
 }
 
+// ---- Drawer ----
+export function openDrawer() {
+  $('panel').classList.add('open');
+  $('panel').setAttribute('aria-hidden', 'false');
+  $('drawer-backdrop').hidden = false;
+  $('drawer-backdrop').onclick = closeDrawer;
+}
+
+export function closeDrawer() {
+  $('panel').classList.remove('open');
+  $('panel').setAttribute('aria-hidden', 'true');
+  $('drawer-backdrop').hidden = true;
+}
+
 // ---- Score table and tickets ----
 export function openOverlay(ctx) {
+  closeDrawer();
   const { state } = ctx;
   const o = $('overlay');
   const close = () => { o.hidden = true; o.innerHTML = ''; };

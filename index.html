@@ -14,9 +14,15 @@
     <div id="map-wrap">
       <svg id="map" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
       <div id="banner" hidden></div>
+      <div id="ticket-hint" hidden></div>
+      <div id="fab">
+        <button id="menu-btn" aria-label="Меню"></button>
+        <button id="undo-btn" aria-label="Отменить последний ход">↶</button>
+      </div>
     </div>
-    <aside id="panel"></aside>
   </main>
+  <div id="drawer-backdrop" hidden></div>
+  <aside id="panel" aria-hidden="true"></aside>
   <div id="rotate-hint">Поверните телефон — карта станет больше</div>
   <div id="popup" hidden></div>
   <div id="overlay" hidden></div>
