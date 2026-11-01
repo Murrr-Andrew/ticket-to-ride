@@ -84,7 +84,7 @@ export function renderMap(svg, handlers) {
   enablePanZoom(svg, handlers);
 }
 
-export function updateMap(svg, state, { last, tickets }) {
+export function updateMap(svg, state, { tickets }) {
   for (const g of layers.routes.children) {
     const id = g.dataset.route;
     const claimLayer = g.querySelector('.claim');
@@ -123,22 +123,6 @@ export function updateMap(svg, state, { last, tickets }) {
     }
   }
 
-  svg.querySelectorAll('.last').forEach((n) => n.classList.remove('last'));
-  for (const sel of lastSelectors(last)) svg.querySelector(sel)?.classList.add('last');
-}
-
-function lastSelectors(action) {
-  if (!action) return [];
-  switch (action.type) {
-    case 'claim':
-    case 'unclaim': return [`[data-route="${action.route}"]`];
-    case 'station':
-    case 'unstation': return [`[data-city="${action.city}"]`];
-    case 'addTicket': return [action.ticket.a, action.ticket.b].map((c) => `[data-city="${c}"]`);
-    case 'markTicket':
-    case 'delTicket': return (action.cities ?? []).map((c) => `[data-city="${c}"]`);
-    default: return [];
-  }
 }
 
 // ---- Pan, pinch-zoom and tap ------------------------------------------

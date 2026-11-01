@@ -38,7 +38,7 @@ function refresh() {
   const tickets = [...state.tickets.values()].map((t) => ({
     a: t.a, b: t.b, hue: t.hue, done: ticketStatus(ROUTES, state, t) !== 'open',
   }));
-  updateMap(svg, state, { last: game.actions.at(-1), tickets });
+  updateMap(svg, state, { tickets });
   renderPanel(ctx);
 }
 

@@ -89,26 +89,6 @@ html, body {
 
 
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.25; }
-}
-
-.route.last .hit {
-  stroke: #ff00d4;
-  stroke-opacity: 0.45;
-  stroke-width: 26;
-}
-
-.route.last .wagon,
-.route.last .claim rect { animation: pulse 1.2s ease-in-out infinite; }
-
-.city.last .city-dot {
-  stroke: #ff00d4;
-  stroke-width: 5;
-  animation: pulse 1.2s ease-in-out infinite;
-}
-
 /* ---- Panel ---- */
 
 /* ---- Floating buttons ---- */

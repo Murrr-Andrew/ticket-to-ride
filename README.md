@@ -11,7 +11,7 @@ The interface is in Russian; city names are as printed on the English board. Wor
 - **Menu** (round button, top right) opens the side panel: player colors, score summary, score table. Every new action uses the chosen color until you pick another one.
 - **Tap a route** to claim it; tap a claimed route to unclaim it. Double routes ask which line.
 - **Tap a city** to place or remove a station, or to start a ticket: "Ticket from here", tap the second city, enter the points.
-- **↶** (below the menu button) reverts the last action. The last action always pulses on the map.
+- **↶** (below the menu button) reverts the last action.
 - **Score & tickets** shows points, wagons, stations and the longest route for every color, and your tickets. A ticket is marked connected automatically when your routes link both cities; use "Mark connected" when the path goes through a station.
 - **Check map** (`?check`) lists every route by city to compare with a physical board.
 

@@ -101,8 +101,8 @@ Route points: 1 → 1, 2 → 2, 3 → 4, 4 → 7, 6 → 15, 8 → 21. (Include 5
 ### Undo and last action
 
 - Every change is an action: claim, unclaim, place/remove station, add/delete ticket, mark/unmark connected.
-- The most recent action is always highlighted on the map (e.g. pulsing outline on that route or city; for ticket actions, the ticket's cities).
-- The Undo button reverts the last action and then highlights the action that is now last. Undo can be pressed repeatedly back to the start of the game.
+- No highlight of the last action on the map (removed at the owner's request, 2026-11-01).
+- The Undo button reverts the last action. Undo can be pressed repeatedly back to the start of the game.
 
 ### Persistence
 
