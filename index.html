@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>TTR Europe Tracker</title>
+  <meta name="theme-color" content="#2b2118">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <main id="app">
+    <div id="map-wrap">
+      <svg id="map" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
+      <div id="banner" hidden></div>
+    </div>
+    <aside id="panel"></aside>
+  </main>
+  <div id="rotate-hint">Rotate your phone for a bigger map</div>
+  <div id="popup" hidden></div>
+  <div id="overlay" hidden></div>
+  <div id="dialog" hidden></div>
+  <div id="toast" hidden></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
