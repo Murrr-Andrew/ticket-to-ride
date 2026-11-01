@@ -38,25 +38,37 @@ export function deriveState(actions) {
   return { claims, stations, tickets };
 }
 
+// Russian color names: [nominative, genitive].
+const COLOR_RU = {
+  red: ['красный', 'красного'], blue: ['синий', 'синего'], green: ['зелёный', 'зелёного'],
+  yellow: ['жёлтый', 'жёлтого'], black: ['чёрный', 'чёрного'], white: ['белый', 'белого'],
+  orange: ['оранжевый', 'оранжевого'], pink: ['розовый', 'розового'], gray: ['серый', 'серого'],
+};
+
 const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+export function colorName(color, capital = false, genitive = false) {
+  const name = COLOR_RU[color]?.[genitive ? 1 : 0] ?? color;
+  return capital ? cap(name) : name;
+}
 
 // cityNames: optional { cityId: displayName } for nicer messages.
 export function canApply(state, action, cityNames = {}) {
   const no = (reason) => ({ ok: false, reason });
   switch (action.type) {
     case 'claim':
-      if (state.claims.has(action.route)) return no('This route is already claimed');
+      if (state.claims.has(action.route)) return no('Этот маршрут уже занят');
       break;
     case 'station': {
       if (state.stations.has(action.city)) {
-        return no(`${cityNames[action.city] ?? cap(action.city)} already has a station`);
+        return no(`В городе ${cityNames[action.city] ?? cap(action.city)} уже есть станция`);
       }
       const used = [...state.stations.values()].filter((c) => c === action.color).length;
-      if (used >= STATIONS) return no(`${cap(action.color)} has no stations left`);
+      if (used >= STATIONS) return no(`У ${colorName(action.color, false, true)} цвета не осталось станций`);
       break;
     }
     case 'addTicket':
-      if (action.ticket.a === action.ticket.b) return no('Pick two different cities');
+      if (action.ticket.a === action.ticket.b) return no('Выберите два разных города');
       break;
   }
   return { ok: true };

@@ -44,7 +44,7 @@ It is a personal tool, not a product. It is hosted as a static page on GitHub Pa
 - **Offline (builder's call):** the page must reopen with no network after the tab was closed. Use a small service worker that caches the app files, plus a web manifest so it can be added to the home screen. Updates must reach the phone: network-first for the app files (fall back to cache offline), or cache-first with a version bump on every deploy. Either way, a fix pushed to GitHub shows up on the next online open.
 - Target browser: **Chrome on the owner's phone** (assume Android). Pinch-zoom/pan must be handled by the page, and the browser's own page zoom must not fight it.
 - Phone-first, in **landscape**. In portrait it still works but shows a "rotate your phone" hint.
-- UI text in English (matches the English edition). Builder's call, confirmed acceptable.
+- UI text in Russian; city names stay as printed on the English board (owner request, 2026-11-01).
 - Repository: new public repo `ticket-to-ride` in GitHub account `Murrr-Andrew`, served by GitHub Pages from the default branch. `gh` CLI is logged in as `Murrr-Andrew` on this machine. The local folder is `/Users/andrewmurko/Documents/apps/ticket-to-ride`.
 
 ## Decided by the owner

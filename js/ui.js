@@ -1,6 +1,6 @@
 // Small DOM helpers: popup menu, dialogs, toast, panel and score overlay.
 
-import { PLAYER_COLORS, WAGONS, STATIONS, colorStats } from './logic.js';
+import { PLAYER_COLORS, WAGONS, STATIONS, colorStats, colorName } from './logic.js';
 import { longestRoute, ticketStatus, ticketScore } from './graph.js';
 import { ROUTES, CITIES } from './data.js';
 import { PLAYER_FILL } from './map.js';
@@ -8,7 +8,6 @@ import { PLAYER_FILL } from './map.js';
 const $ = (id) => document.getElementById(id);
 const cityName = new Map(CITIES.map((c) => [c.id, c.name]));
 export const nameOf = (id) => cityName.get(id) ?? id;
-export const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 function h(tag, props = {}, ...children) {
   const node = document.createElement(tag);
@@ -57,21 +56,21 @@ export function hidePopup() { $('popup').hidden = true; }
 export function askPoints(a, b) {
   return new Promise((resolve) => {
     const d = $('dialog');
-    const input = h('input', { type: 'number', inputmode: 'numeric', min: 1, max: 30, placeholder: 'Points' });
+    const input = h('input', { type: 'number', inputmode: 'numeric', min: 1, max: 30, placeholder: 'Очки' });
     const done = (value) => { d.hidden = true; d.innerHTML = ''; resolve(value); };
     const save = () => {
       const n = Number(input.value);
-      if (!Number.isInteger(n) || n < 1 || n > 30) { showToast('Enter the points from the ticket (1–30)'); return; }
+      if (!Number.isInteger(n) || n < 1 || n > 30) { showToast('Введите очки с карточки (1–30)'); return; }
       done(n);
     };
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') save(); });
     d.innerHTML = '';
     d.append(h('div', { class: 'sheet dialog-box' },
-      h('h2', {}, `Ticket ${nameOf(a)} – ${nameOf(b)}`),
+      h('h2', {}, `Билет ${nameOf(a)} – ${nameOf(b)}`),
       input,
       h('div', { class: 'row-actions' },
-        h('button', { class: 'btn', onclick: () => done(null) }, 'Cancel'),
-        h('button', { class: 'btn primary', onclick: save }, 'Save'))));
+        h('button', { class: 'btn', onclick: () => done(null) }, 'Отмена'),
+        h('button', { class: 'btn primary', onclick: save }, 'Сохранить'))));
     d.hidden = false;
     input.focus();
   });
@@ -102,22 +101,22 @@ export function renderPanel(ctx) {
     h('div', { class: 'chips' }, PLAYER_COLORS.map((c) => h('button', {
       class: `chip${c === color ? ' active' : ''}`,
       style: `background:${PLAYER_FILL[c]}`,
-      'aria-label': cap(c),
+      'aria-label': colorName(c, true),
       onclick: () => ctx.setColor(c),
     }))),
     h('button', { class: 'summary', onclick: ctx.openTable },
-      h('div', {}, h('b', {}, String(s.routePts)), ' pts'),
-      h('div', {}, 'Wagons ', h('span', { class: s.wagonsLeft < 0 ? 'neg' : '' }, `${s.wagonsUsed}/${WAGONS}`)),
-      h('div', {}, `Stations ${s.stationsUsed}/${STATIONS}`),
-      h('div', {}, `Tickets ${doneCount}/${tickets.length}`),
+      h('div', {}, h('b', {}, String(s.routePts)), ' очк.'),
+      h('div', {}, 'Вагоны ', h('span', { class: s.wagonsLeft < 0 ? 'neg' : '' }, `${s.wagonsUsed}/${WAGONS}`)),
+      h('div', {}, `Станции ${s.stationsUsed}/${STATIONS}`),
+      h('div', {}, `Билеты ${doneCount}/${tickets.length}`),
       tickets.length ? h('div', { class: 'muted' }, `+${s.ticketsDone} / −${s.ticketsOpen}`) : null,
-      h('div', {}, `Longest ${s.longest}`)),
+      h('div', {}, `Цепочка ${s.longest}`)),
     pendingFrom
-      ? h('div', { class: 'hint' }, `Ticket from ${nameOf(pendingFrom)}: tap the second city`,
-        h('button', { class: 'btn', style: 'margin-top:6px', onclick: ctx.cancelTicket }, 'Cancel'))
+      ? h('div', { class: 'hint' }, `Билет из ${nameOf(pendingFrom)}: нажмите второй город`,
+        h('button', { class: 'btn', style: 'margin-top:6px', onclick: ctx.cancelTicket }, 'Отмена'))
       : null,
-    h('button', { class: 'btn primary', disabled: game.actions.length === 0, onclick: ctx.undo }, '↶ Undo'),
-    h('button', { class: 'btn', onclick: ctx.openTable }, 'Score & tickets'),
+    h('button', { class: 'btn primary', disabled: game.actions.length === 0, onclick: ctx.undo }, '↶ Отменить'),
+    h('button', { class: 'btn', onclick: ctx.openTable }, 'Очки и билеты'),
   ].filter(Boolean));
 
   // Last-round warning.
@@ -126,7 +125,7 @@ export function renderPanel(ctx) {
     .filter(({ left }) => left.wagonsUsed > 0 && left.wagonsLeft <= 2);
   const banner = $('banner');
   banner.hidden = low.length === 0;
-  banner.textContent = low.map(({ c, left }) => `Last round: ${cap(c)} has ${left.wagonsLeft} wagons left`).join(' · ');
+  banner.textContent = low.map(({ c, left }) => `Последний круг: у ${colorName(c, false, true)} осталось вагонов: ${left.wagonsLeft}`).join(' · ');
 }
 
 // ---- Score table and tickets ----
@@ -143,13 +142,13 @@ export function openOverlay(ctx) {
   const best = Math.max(0, ...rows.map((r) => r.s.longest));
 
   const table = h('table', {},
-    h('tr', {}, ['Color', 'Routes', 'Tickets', 'Total', 'Wagons', 'Stations', 'Longest'].map((t) => h('th', {}, t))),
+    h('tr', {}, ['Цвет', 'Маршруты', 'Билеты', 'Итого', 'Вагоны', 'Станции', 'Цепочка'].map((t) => h('th', {}, t))),
     rows.map(({ c, s }) => h('tr', {},
-      h('td', {}, h('span', { class: 'swatch', style: `background:${PLAYER_FILL[c]};vertical-align:middle;margin-right:6px` }), cap(c)),
+      h('td', {}, h('span', { class: 'swatch', style: `background:${PLAYER_FILL[c]};vertical-align:middle;margin-right:6px` }), colorName(c, true)),
       h('td', {}, String(s.routePts)),
       h('td', {}, s.ticketsDone || s.ticketsOpen ? `+${s.ticketsDone} / −${s.ticketsOpen}` : '–'),
       h('td', {}, h('b', {}, String(s.routePts + s.ticketsDone - s.ticketsOpen))),
-      h('td', { class: s.wagonsLeft < 0 ? 'neg' : '' }, `${s.wagonsUsed} (${s.wagonsLeft} left)`),
+      h('td', { class: s.wagonsLeft < 0 ? 'neg' : '' }, `${s.wagonsUsed} (осталось ${s.wagonsLeft})`),
       h('td', {}, `${s.stationsUsed}/${STATIONS}`),
       h('td', {}, `${s.longest}${s.longest > 0 && s.longest === best ? ' ★' : ''}`))));
 
@@ -160,28 +159,28 @@ export function openOverlay(ctx) {
       return h('div', { class: 'ticket' },
         h('span', { class: 'swatch', style: `background:${t.hue}` }),
         h('span', { class: 'name' }, `${nameOf(t.a)} – ${nameOf(t.b)} · ${t.points} · `,
-          h('span', { style: `color:${PLAYER_FILL[t.color]};font-weight:700` }, cap(t.color)), ' · ',
-          st === 'auto' ? '✓ connected' : st === 'manual' ? '✓ marked' : 'open'),
+          h('span', { style: `color:${PLAYER_FILL[t.color]};font-weight:700` }, colorName(t.color, true)), ' · ',
+          st === 'auto' ? '✓ соединён' : st === 'manual' ? '✓ отмечен' : 'не соединён'),
         st !== 'auto'
           ? h('button', { class: 'btn', onclick: () => { ctx.markTicket(t, !t.manual); close(); } },
-            t.manual ? 'Unmark' : 'Mark connected')
+            t.manual ? 'Снять отметку' : 'Соединён')
           : null,
-        h('button', { class: 'btn danger', onclick: () => { ctx.deleteTicket(t); close(); } }, 'Delete'));
+        h('button', { class: 'btn danger', onclick: () => { ctx.deleteTicket(t); close(); } }, 'Удалить'));
     })
-    : h('p', {}, 'No tickets yet. Tap a city → “Ticket from here”.');
+    : h('p', {}, 'Билетов пока нет. Нажмите на город → «Билет отсюда».');
 
   o.innerHTML = '';
   o.append(h('div', { class: 'sheet', onclick: (e) => e.stopPropagation() },
-    h('h2', {}, 'Score'),
-    rows.length ? table : h('p', {}, 'Nothing claimed yet.'),
+    h('h2', {}, 'Очки'),
+    rows.length ? table : h('p', {}, 'Пока ничего не отмечено.'),
     h('p', { style: 'font-size:12px;color:#7a6a55' },
-      'Total = routes + connected tickets − open tickets. Longest route is shown only; its bonus is not added.'),
-    h('h3', {}, 'Tickets'),
+      'Итого = маршруты + соединённые билеты − несоединённые. Самая длинная цепочка только показывается, бонус за неё не добавляется.'),
+    h('h3', {}, 'Билеты'),
     ticketList,
     h('div', { class: 'row-actions' },
-      h('button', { class: 'btn danger', onclick: () => { if (confirm('Start a new game? Everything will be cleared.')) { ctx.newGame(); close(); } } }, 'New game'),
-      h('a', { class: 'btn', href: '?check', style: 'text-align:center;text-decoration:none' }, 'Check map'),
-      h('button', { class: 'btn primary', onclick: close }, 'Close'))));
+      h('button', { class: 'btn danger', onclick: () => { if (confirm('Начать новую игру? Всё будет удалено.')) { ctx.newGame(); close(); } } }, 'Новая игра'),
+      h('a', { class: 'btn', href: '?check', style: 'text-align:center;text-decoration:none' }, 'Сверка карты'),
+      h('button', { class: 'btn primary', onclick: close }, 'Закрыть'))));
   o.onclick = close;
   o.hidden = false;
 }

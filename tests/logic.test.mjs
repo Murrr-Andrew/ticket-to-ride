@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   routePoints, emptyGame, deriveState, canApply, colorStats, loadGame, saveGame,
-  PLAYER_COLORS, WAGONS, STATIONS,
+  PLAYER_COLORS, WAGONS, STATIONS, colorName,
 } from '../js/logic.js';
 
 const ROUTES = [
@@ -68,7 +68,7 @@ test('canApply refuses 4th station for a color', () => {
   const s = deriveState(['a', 'b', 'c'].map((city) => ({ type: 'station', city, color: 'blue' })));
   const r = canApply(s, { type: 'station', city: 'd', color: 'blue' });
   assert.equal(r.ok, false);
-  assert.equal(r.reason, 'Blue has no stations left');
+  assert.equal(r.reason, 'У синего цвета не осталось станций');
   assert.equal(canApply(s, { type: 'station', city: 'd', color: 'red' }).ok, true);
 });
 
@@ -76,7 +76,7 @@ test('canApply refuses second station in a city', () => {
   const s = deriveState([{ type: 'station', city: 'paris', color: 'red' }]);
   const r = canApply(s, { type: 'station', city: 'paris', color: 'blue' }, { paris: 'Paris' });
   assert.equal(r.ok, false);
-  assert.equal(r.reason, 'Paris already has a station');
+  assert.equal(r.reason, 'В городе Paris уже есть станция');
 });
 
 test('canApply refuses same-city ticket', () => {
@@ -125,4 +125,10 @@ test('saveGame/loadGame round-trip', () => {
   const game = { actions: [{ type: 'claim', route: 'r1', color: 'red' }], activeColor: 'blue' };
   saveGame(st, game);
   assert.deepEqual(loadGame(st), game);
+});
+
+test('colorName gives Russian names for player and route colors', () => {
+  assert.equal(colorName('blue'), 'синий');
+  assert.equal(colorName('gray'), 'серый');
+  assert.equal(colorName('blue', true), 'Синий');
 });

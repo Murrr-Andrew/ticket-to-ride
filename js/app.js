@@ -1,8 +1,8 @@
-import { emptyGame, deriveState, canApply, loadGame, saveGame } from './logic.js';
+import { emptyGame, deriveState, canApply, loadGame, saveGame, colorName } from './logic.js';
 import { ticketStatus } from './graph.js';
 import { CITIES, ROUTES } from './data.js';
 import { renderMap, updateMap, ROUTE_FILL, PLAYER_FILL } from './map.js';
-import { renderPanel, openOverlay, showPopup, hidePopup, showToast, askPoints, nameOf, cap } from './ui.js';
+import { renderPanel, openOverlay, showPopup, hidePopup, showToast, askPoints, nameOf } from './ui.js';
 import { renderCheck } from './check.js';
 
 const TICKET_HUES = ['#ff00aa', '#00c8ff', '#ff7a00', '#8a2be2', '#00d084', '#c0ff00'];
@@ -59,7 +59,9 @@ const ctx = {
 
 function lineLabel(r) {
   const owner = state.claims.get(r.id);
-  return owner ? `Unclaim ${r.color} line (${cap(owner)})` : `Claim ${r.color} line`;
+  return owner
+    ? `Снять: ${colorName(r.color)} путь (${colorName(owner)} игрок)`
+    : `Занять ${colorName(r.color)} путь`;
 }
 
 function toggleRoute(r) {
@@ -85,7 +87,7 @@ function onRouteTap(routeId, at) {
 async function onCityTap(cityId, at) {
   hidePopup();
   if (pendingFrom) {
-    if (cityId === pendingFrom) { showToast('Pick a different city'); return; }
+    if (cityId === pendingFrom) { showToast('Выберите другой город'); return; }
     const a = pendingFrom;
     pendingFrom = null;
     refresh();
@@ -101,13 +103,13 @@ async function onCityTap(cityId, at) {
   const owner = state.stations.get(cityId);
   const items = [];
   if (owner) {
-    items.push({ label: `Remove ${owner} station`, swatch: PLAYER_FILL[owner], danger: true,
+    items.push({ label: `Убрать станцию (${colorName(owner)})`, swatch: PLAYER_FILL[owner], danger: true,
       onClick: () => dispatch({ type: 'unstation', city: cityId, prevColor: owner }) });
   } else {
-    items.push({ label: `Place ${game.activeColor} station`, swatch: PLAYER_FILL[game.activeColor],
+    items.push({ label: `Поставить станцию (${colorName(game.activeColor)})`, swatch: PLAYER_FILL[game.activeColor],
       onClick: () => dispatch({ type: 'station', city: cityId, color: game.activeColor }) });
   }
-  items.push({ label: 'Ticket from here', onClick: () => { pendingFrom = cityId; refresh(); } });
+  items.push({ label: 'Билет отсюда', onClick: () => { pendingFrom = cityId; refresh(); } });
   showPopup(at, nameOf(cityId), items);
 }
 

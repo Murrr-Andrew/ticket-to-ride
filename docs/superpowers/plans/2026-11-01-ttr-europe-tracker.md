@@ -13,7 +13,7 @@
 ## Global Constraints
 
 - No framework, no build step, no runtime dependencies. Tests use only `node:test` and `node:assert`.
-- UI text in English. City names spelled as on the owner's board (`reference/board.jpg`), e.g. `Zacrab`, `Kyiv`, `Kobenhavn`, `Munchen`.
+- UI text in Russian (changed by the owner mid-build). City names spelled as on the owner's board (`reference/board.jpg`), e.g. `Zacrab`, `Kyiv`, `Kobenhavn`, `Munchen`.
 - Player colors: `red`, `blue`, `green`, `yellow`, `black`. 45 wagons and 3 stations per color.
 - Route colors: `red, blue, green, yellow, black, white, orange, pink, gray`.
 - Route points: 1→1, 2→2, 3→4, 4→7, 5→10, 6→15, 8→21.
