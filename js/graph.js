@@ -32,14 +32,19 @@ export function isConnected(routes, claims, color, a, b) {
 }
 
 // Longest trail in wagons: each route at most once, cities may repeat.
-export function longestRoute(routes, claims, color) {
+// The search is exponential, so it stops after `budget` steps and returns the
+// best trail found so far. Real games finish far below the budget.
+export function longestRoute(routes, claims, color, budget = 200000) {
   const edges = ownedEdges(routes, claims, color);
   const adj = adjacency(edges);
   const used = new Set();
   let best = 0;
+  let steps = 0;
   const walk = (city, total) => {
     if (total > best) best = total;
+    if (++steps > budget) return;
     for (const e of adj.get(city)) {
+      if (steps > budget) return;
       if (used.has(e.id)) continue;
       used.add(e.id);
       walk(e.a === city ? e.b : e.a, total + e.len);

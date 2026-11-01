@@ -90,6 +90,35 @@ export function colorStats(state, routes, color) {
   return { routePts, wagonsUsed, wagonsLeft: WAGONS - wagonsUsed, stationsUsed };
 }
 
+const ALL_COLORS = new Set(PLAYER_COLORS);
+const isObj = (x) => x !== null && typeof x === 'object';
+
+// Keeps only actions that make sense against the current map data, so an old
+// or damaged save can't break the page. `known` = { routes: Set, cities: Set }.
+export function sanitizeActions(actions, known) {
+  const tickets = new Set();
+  const ok = (a) => {
+    if (!isObj(a)) return false;
+    switch (a.type) {
+      case 'claim': return known.routes.has(a.route) && ALL_COLORS.has(a.color);
+      case 'unclaim': return known.routes.has(a.route);
+      case 'station': return known.cities.has(a.city) && ALL_COLORS.has(a.color);
+      case 'unstation': return known.cities.has(a.city);
+      case 'addTicket': {
+        const t = a.ticket;
+        const good = isObj(t) && typeof t.id === 'string' && known.cities.has(t.a) && known.cities.has(t.b)
+          && ALL_COLORS.has(t.color) && Number.isFinite(t.points);
+        if (good) tickets.add(t.id);
+        return good;
+      }
+      case 'delTicket':
+      case 'markTicket': return tickets.has(a.id);
+      default: return false;
+    }
+  };
+  return Array.isArray(actions) ? actions.filter(ok) : [];
+}
+
 export function loadGame(storage) {
   try {
     const game = JSON.parse(storage.getItem(STORAGE_KEY));

@@ -1,4 +1,4 @@
-import { emptyGame, deriveState, canApply, loadGame, saveGame, colorName } from './logic.js';
+import { emptyGame, deriveState, canApply, loadGame, saveGame, colorName, sanitizeActions, STORAGE_KEY } from './logic.js';
 import { ticketStatus } from './graph.js';
 import { CITIES, ROUTES } from './data.js';
 import { renderMap, updateMap, ROUTE_FILL, PLAYER_FILL } from './map.js';
@@ -9,13 +9,31 @@ const TICKET_HUES = ['#ff00aa', '#00c8ff', '#ff7a00', '#8a2be2', '#00d084', '#c0
 const routeById = new Map(ROUTES.map((r) => [r.id, r]));
 const cityNames = Object.fromEntries(CITIES.map((c) => [c.id, c.name]));
 
-let game = loadGame(localStorage);
+const known = { routes: new Set(routeById.keys()), cities: new Set(CITIES.map((c) => c.id)) };
+
+// Load the saved game; anything that doesn't fit the current map is dropped,
+// and a save that still fails is kept aside under a backup key.
+function startGame() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  try {
+    const g = loadGame(localStorage);
+    g.actions = sanitizeActions(g.actions, known);
+    deriveState(g.actions);
+    return g;
+  } catch {
+    if (raw) localStorage.setItem(`${STORAGE_KEY}-backup`, raw);
+    return emptyGame();
+  }
+}
+
+let game = startGame();
 let state = deriveState(game.actions);
 let pendingFrom = null; // first city of a ticket being added
 
 const svg = document.getElementById('map');
 
 function refresh() {
+  hidePopup();
   state = deriveState(game.actions);
   const tickets = [...state.tickets.values()].map((t) => ({
     a: t.a, b: t.b, hue: t.hue, done: ticketStatus(ROUTES, state, t) !== 'open',
@@ -117,6 +135,7 @@ if (new URLSearchParams(location.search).has('check')) {
   renderCheck(document.getElementById('app'));
 } else {
   renderMap(svg, { onRouteTap, onCityTap });
+  svg.addEventListener('pointerdown', hidePopup);
   refresh();
 }
 

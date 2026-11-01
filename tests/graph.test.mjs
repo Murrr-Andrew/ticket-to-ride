@@ -73,3 +73,20 @@ test('ticketScore splits done and open', () => {
   assert.deepEqual(ticketScore(ROUTES, s, 'red'), { done: 13, open: 4 });
   assert.deepEqual(ticketScore(ROUTES, s, 'blue'), { done: 0, open: 0 });
 });
+
+test('longestRoute stays fast on a huge dense network', () => {
+  // 8x8 grid of cities, every edge claimed by one color: far beyond a real game.
+  const routes = [];
+  const id = (x, y) => `c${x}-${y}`;
+  for (let x = 0; x < 8; x++) {
+    for (let y = 0; y < 8; y++) {
+      if (x < 7) routes.push({ id: `h${x}${y}`, a: id(x, y), b: id(x + 1, y), len: 2 });
+      if (y < 7) routes.push({ id: `v${x}${y}`, a: id(x, y), b: id(x, y + 1), len: 2 });
+    }
+  }
+  const claims = new Map(routes.map((r) => [r.id, 'black']));
+  const t0 = Date.now();
+  const best = longestRoute(routes, claims, 'black');
+  assert.ok(Date.now() - t0 < 1500, `took ${Date.now() - t0} ms`);
+  assert.ok(best >= 40, `found ${best}`);
+});

@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   routePoints, emptyGame, deriveState, canApply, colorStats, loadGame, saveGame,
-  PLAYER_COLORS, WAGONS, STATIONS, colorName,
+  PLAYER_COLORS, WAGONS, STATIONS, colorName, sanitizeActions,
 } from '../js/logic.js';
 
 const ROUTES = [
@@ -131,4 +131,25 @@ test('colorName gives Russian names for player and route colors', () => {
   assert.equal(colorName('blue'), 'синий');
   assert.equal(colorName('gray'), 'серый');
   assert.equal(colorName('blue', true), 'Синий');
+});
+
+test('sanitizeActions drops broken and unknown actions', () => {
+  const known = { routes: new Set(['r1']), cities: new Set(['paris', 'wien']) };
+  const kept = sanitizeActions([
+    null,
+    { type: 'addTicket' },
+    { type: 'claim', route: 'r1', color: 'red' },
+    { type: 'claim', route: 'gone', color: 'red' },
+    { type: 'claim', route: 'r1', color: 'purple' },
+    { type: 'station', city: 'paris', color: 'blue' },
+    { type: 'station', city: 'atlantis', color: 'blue' },
+    { type: 'addTicket', ticket: { id: 't1', a: 'paris', b: 'wien', points: 8, color: 'red', hue: '#f0a' } },
+    { type: 'addTicket', ticket: { id: 't2', a: 'paris', b: 'atlantis', points: 8, color: 'red', hue: '#f0a' } },
+    { type: 'markTicket', id: 't1', manual: true },
+    { type: 'delTicket', id: 't1' },
+    { type: 'unclaim', route: 'r1', prevColor: 'red' },
+    { type: 'explode' },
+  ], known);
+  assert.deepEqual(kept.map((a) => a.type), ['claim', 'station', 'addTicket', 'markTicket', 'delTicket', 'unclaim']);
+  assert.doesNotThrow(() => deriveState(kept));
 });
